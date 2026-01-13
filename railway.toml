@@ -1,0 +1,13 @@
+[build]
+builder = "nixpacks"
+buildCommand = "pnpm install && pnpm --filter backend build"
+
+[deploy]
+startCommand = "pnpm --filter backend start"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 100
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
+
+[service]
+name = "intercambio-backend"
