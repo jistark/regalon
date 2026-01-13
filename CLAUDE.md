@@ -4,11 +4,11 @@ Aplicación web para organizar intercambios de regalos con sistema de colores co
 
 ## Stack
 
-- **Monorepo**: pnpm workspaces
+- **Monorepo**: bun workspaces
 - **Backend**: Hono + Drizzle ORM + PostgreSQL
 - **Frontend**: React + Vite + Tailwind CSS + Framer Motion
 - **Auth**: Magic links vía Resend
-- **Hosting**: Render (backend + DB + frontend estático)
+- **Hosting**: Railway (backend + DB)
 
 ## Estructura del Proyecto
 
@@ -20,8 +20,9 @@ intercambio-secreto/
 │   └── shared/           # Tipos compartidos, validaciones (zod)
 ├── docs/
 │   └── agents/           # Agentes especializados
-├── pnpm-workspace.yaml
+├── bun.lock
 ├── package.json
+├── railway.toml
 └── CLAUDE.md
 ```
 
@@ -29,21 +30,21 @@ intercambio-secreto/
 
 ```bash
 # Instalar dependencias
-pnpm install
+bun install
 
 # Desarrollo
-pnpm dev              # Corre backend y frontend en paralelo
-pnpm dev:backend      # Solo backend (puerto 3000)
-pnpm dev:frontend     # Solo frontend (puerto 5173)
+bun run dev              # Corre backend y frontend en paralelo
+bun run dev:backend      # Solo backend (puerto 3000)
+bun run dev:frontend     # Solo frontend (puerto 5173)
 
 # Base de datos
-pnpm db:generate      # Generar migraciones
-pnpm db:migrate       # Aplicar migraciones
-pnpm db:studio        # Abrir Drizzle Studio
+bun run db:generate      # Generar migraciones
+bun run db:migrate       # Aplicar migraciones (drizzle push)
+bun run db:studio        # Abrir Drizzle Studio
 
 # Build
-pnpm build            # Build de producción
-pnpm typecheck        # Verificar tipos en todo el monorepo
+bun run build            # Build de producción
+bun run typecheck        # Verificar tipos en todo el monorepo
 ```
 
 ## Variables de Entorno
