@@ -40,7 +40,10 @@ export type ColorNombre = z.infer<typeof ColorNombre>
 // Schemas de entrada (requests)
 export const CrearIntercambioSchema = z.object({
   nombre: z.string().min(1, 'El nombre es requerido').max(100),
-  fechaEvento: z.string().datetime('Fecha inválida'),
+  fechaEvento: z.string().min(1, 'La fecha es requerida').refine(
+    (val) => !isNaN(Date.parse(val)),
+    'Fecha inválida'
+  ),
   tematica: z.string().max(200).optional(),
   precioBase: z.number().positive('El precio debe ser mayor a 0'),
   reglaPrecio: ReglaPrecio.default('FIJO'),
