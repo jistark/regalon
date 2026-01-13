@@ -11,13 +11,14 @@
     "lint": "eslint src/",
     "test": "vitest",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit push",
+    "db:migrate": "drizzle-kit push:pg",
     "db:studio": "drizzle-kit studio",
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
     "@hono/node-server": "^1.8.0",
     "@hono/zod-validator": "^0.2.1",
+    "dotenv": "^17.2.3",
     "drizzle-orm": "^0.29.3",
     "hono": "^4.0.0",
     "pg": "^8.11.3",

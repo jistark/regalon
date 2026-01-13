@@ -1,6 +1,27 @@
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Lazy initialization to avoid errors during import when API key is not set
+let resendClient: Resend | null = null
+
+function getResendClient(): Resend {
+  if (!resendClient) {
+    const apiKey = process.env.RESEND_API_KEY
+    if (!apiKey || apiKey.startsWith('re_test') || apiKey === 're_test_placeholder') {
+      // En desarrollo sin API key real, usamos un cliente mock
+      console.warn('[Email] Usando modo desarrollo - emails no se enviarán realmente')
+      return {
+        emails: {
+          send: async (params: unknown) => {
+            console.log('[Email Mock] Se enviaría email:', params)
+            return { data: { id: 'mock-id' }, error: null }
+          }
+        }
+      } as unknown as Resend
+    }
+    resendClient = new Resend(apiKey)
+  }
+  return resendClient
+}
 
 interface EnviarInvitacionParams {
   email: string
@@ -29,7 +50,7 @@ export async function enviarInvitacion({
     day: 'numeric',
   }).format(fechaEvento)
 
-  const { error } = await resend.emails.send({
+  const { error } = await getResendClient().emails.send({
     from: 'Intercambio Secreto <noreply@tudominio.com>',
     to: email,
     subject: `${nombre}, tienes una invitación para "${intercambioNombre}"`,
@@ -95,7 +116,7 @@ export async function enviarRecordatorio({
     day: 'numeric',
   }).format(fechaEvento)
 
-  const { error } = await resend.emails.send({
+  const { error } = await getResendClient().emails.send({
     from: 'Intercambio Secreto <noreply@tudominio.com>',
     to: email,
     subject: `Recordatorio: El sorteo de "${intercambioNombre}" ya fue realizado`,
