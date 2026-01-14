@@ -10,7 +10,7 @@ type State = 'loading' | 'error' | 'ruleta' | 'resultado'
 
 export function Revelar() {
   const navigate = useNavigate()
-  const { jwt, participante: authParticipante } = useAuthStore()
+  const { jwt } = useAuthStore()
 
   const [state, setState] = useState<State>('loading')
   const [error, setError] = useState<string | null>(null)

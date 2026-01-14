@@ -10,7 +10,7 @@ export function MiIntercambio() {
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token')
 
-  const { jwt, participante: authParticipante, verificarToken, isLoading: authLoading } = useAuthStore()
+  const { jwt, verificarToken, isLoading: authLoading } = useAuthStore()
 
   const [intercambio, setIntercambio] = useState<Intercambio | null>(null)
   const [participante, setParticipante] = useState<Participante | null>(null)
