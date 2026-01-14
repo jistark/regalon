@@ -1,5 +1,4 @@
 import 'dotenv/config'
-import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { logger } from 'hono/logger'
 import { createCorsMiddleware } from './middleware/cors.js'
@@ -48,14 +47,14 @@ app.notFound((c) => {
   return c.json({ success: false, error: 'Ruta no encontrada' }, 404)
 })
 
-// Iniciar servidor
+// Iniciar servidor con Bun nativo
 const port = Number(process.env.PORT) || 3000
 
 console.log(`Servidor iniciando en puerto ${port}...`)
 
-serve({
-  fetch: app.fetch,
+const server = Bun.serve({
   port,
+  fetch: app.fetch,
 })
 
-console.log(`Servidor corriendo en http://localhost:${port}`)
+console.log(`Servidor corriendo en http://localhost:${server.port}`)
