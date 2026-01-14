@@ -76,7 +76,7 @@ class ApiClient {
     reglaPrecio?: string
     factorPrecio?: number
   }) {
-    return this.request<{ intercambio: any; adminToken: string }>(
+    return this.request<{ id: string; adminToken: string; adminUrl: string }>(
       '/api/intercambios',
       {
         method: 'POST',

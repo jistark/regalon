@@ -39,7 +39,7 @@ export function CrearIntercambio() {
 
     if (result.success) {
       // Navigate to admin dashboard with admin token
-      navigate(`/admin/${result.data.intercambio.id}?admin_token=${result.data.adminToken}`)
+      navigate(`/admin/${result.data.id}?admin_token=${result.data.adminToken}`)
     } else {
       setError(result.error)
     }
