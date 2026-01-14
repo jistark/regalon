@@ -16,6 +16,8 @@ export function ParticipanteCard({
   isSelected = false,
   onClick,
 }: ParticipanteCardProps) {
+  const hasColor = participante.color && participante.colorHex
+
   return (
     <motion.div
       layout
@@ -33,12 +35,18 @@ export function ParticipanteCard({
         }
       `}
     >
-      <div
-        className="w-10 h-10 rounded-full flex items-center justify-center text-lg shadow-sm"
-        style={{ backgroundColor: participante.colorHex }}
-      >
-        {participante.colorEmoji}
-      </div>
+      {hasColor ? (
+        <div
+          className="w-10 h-10 rounded-full flex items-center justify-center text-lg shadow-sm"
+          style={{ backgroundColor: participante.colorHex! }}
+        >
+          {participante.colorEmoji}
+        </div>
+      ) : (
+        <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg shadow-sm bg-gray-200 text-gray-500">
+          {participante.nombre.charAt(0).toUpperCase()}
+        </div>
+      )}
 
       <div className="flex-1 min-w-0">
         <p className="font-medium text-gray-900 truncate">
@@ -49,9 +57,6 @@ export function ParticipanteCard({
             {participante.email}
           </p>
         )}
-        <p className="text-xs text-gray-400">
-          Color: {participante.color}
-        </p>
       </div>
 
       {onRemove && (

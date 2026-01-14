@@ -12,7 +12,7 @@ function App() {
       <Route element={<Layout />}>
         <Route path="/" element={<Home />} />
         <Route path="/crear" element={<CrearIntercambio />} />
-        <Route path="/admin/:id" element={<Dashboard />} />
+        <Route path="/intercambio/:slug" element={<Dashboard />} />
         <Route path="/mi-intercambio" element={<MiIntercambio />} />
         <Route path="/revelar" element={<Revelar />} />
       </Route>

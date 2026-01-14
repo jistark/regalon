@@ -18,6 +18,7 @@ export const reglaPrecioEnum = pgEnum('regla_precio', [
 // Tablas
 export const intercambios = pgTable('intercambios', {
   id: uuid('id').defaultRandom().primaryKey(),
+  slug: varchar('slug', { length: 120 }).notNull().unique(),
   nombre: varchar('nombre', { length: 100 }).notNull(),
   fechaEvento: timestamp('fecha_evento').notNull(),
   tematica: varchar('tematica', { length: 200 }),
@@ -25,7 +26,7 @@ export const intercambios = pgTable('intercambios', {
   reglaPrecio: reglaPrecioEnum('regla_precio').default('FIJO').notNull(),
   factorPrecio: decimal('factor_precio', { precision: 10, scale: 2 }).default('0'),
   estado: estadoIntercambioEnum('estado').default('BORRADOR').notNull(),
-  adminToken: varchar('admin_token', { length: 64 }).notNull().unique(),
+  sessionToken: varchar('session_token', { length: 32 }).notNull().unique(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
@@ -35,9 +36,9 @@ export const participantes = pgTable('participantes', {
   intercambioId: uuid('intercambio_id').notNull().references(() => intercambios.id, { onDelete: 'cascade' }),
   nombre: varchar('nombre', { length: 100 }).notNull(),
   email: varchar('email', { length: 255 }).notNull(),
-  color: varchar('color', { length: 20 }).notNull(),
-  colorHex: varchar('color_hex', { length: 7 }).notNull(),
-  colorEmoji: varchar('color_emoji', { length: 10 }).notNull(),
+  color: varchar('color', { length: 20 }),
+  colorHex: varchar('color_hex', { length: 7 }),
+  colorEmoji: varchar('color_emoji', { length: 10 }),
   magicToken: varchar('magic_token', { length: 64 }).notNull().unique(),
   asignadoAId: uuid('asignado_a_id'),
   haVistoResultado: boolean('ha_visto_resultado').default(false).notNull(),

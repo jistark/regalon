@@ -76,7 +76,7 @@ class ApiClient {
     reglaPrecio?: string
     factorPrecio?: number
   }) {
-    return this.request<{ id: string; adminToken: string; adminUrl: string }>(
+    return this.request<{ slug: string; sessionToken: string; url: string }>(
       '/api/intercambios',
       {
         method: 'POST',
@@ -85,17 +85,17 @@ class ApiClient {
     )
   }
 
-  async obtenerIntercambio(id: string, adminToken: string) {
-    return this.request<any>(`/api/intercambios/${id}?admin_token=${adminToken}`)
+  async obtenerIntercambio(slug: string, sessionToken: string) {
+    return this.request<any>(`/api/intercambios/${slug}?session_token=${sessionToken}`)
   }
 
   async agregarParticipante(
-    intercambioId: string,
-    adminToken: string,
-    data: { nombre: string; email: string; color: string }
+    slug: string,
+    sessionToken: string,
+    data: { nombre: string; email: string }
   ) {
     return this.request<{ participante: any }>(
-      `/api/intercambios/${intercambioId}/participantes?admin_token=${adminToken}`,
+      `/api/intercambios/${slug}/participantes?session_token=${sessionToken}`,
       {
         method: 'POST',
         body: JSON.stringify(data),
@@ -104,12 +104,12 @@ class ApiClient {
   }
 
   async eliminarParticipante(
-    intercambioId: string,
-    adminToken: string,
+    slug: string,
+    sessionToken: string,
     participanteId: string
   ) {
     return this.request<void>(
-      `/api/intercambios/${intercambioId}/participantes/${participanteId}?admin_token=${adminToken}`,
+      `/api/intercambios/${slug}/participantes/${participanteId}?session_token=${sessionToken}`,
       {
         method: 'DELETE',
       }
@@ -117,12 +117,12 @@ class ApiClient {
   }
 
   async agregarExclusion(
-    intercambioId: string,
-    adminToken: string,
+    slug: string,
+    sessionToken: string,
     data: { participanteId: string; excluidoId: string; razon?: string }
   ) {
     return this.request<{ exclusion: any }>(
-      `/api/intercambios/${intercambioId}/exclusiones?admin_token=${adminToken}`,
+      `/api/intercambios/${slug}/exclusiones?session_token=${sessionToken}`,
       {
         method: 'POST',
         body: JSON.stringify(data),
@@ -131,30 +131,30 @@ class ApiClient {
   }
 
   async eliminarExclusion(
-    intercambioId: string,
-    adminToken: string,
+    slug: string,
+    sessionToken: string,
     exclusionId: string
   ) {
     return this.request<void>(
-      `/api/intercambios/${intercambioId}/exclusiones/${exclusionId}?admin_token=${adminToken}`,
+      `/api/intercambios/${slug}/exclusiones/${exclusionId}?session_token=${sessionToken}`,
       {
         method: 'DELETE',
       }
     )
   }
 
-  async sortear(intercambioId: string, adminToken: string) {
-    return this.request<{ message: string }>(
-      `/api/intercambios/${intercambioId}/sortear?admin_token=${adminToken}`,
+  async sortear(slug: string, sessionToken: string) {
+    return this.request<{ total: number }>(
+      `/api/intercambios/${slug}/sortear?session_token=${sessionToken}`,
       {
         method: 'POST',
       }
     )
   }
 
-  async enviarInvitaciones(intercambioId: string, adminToken: string) {
+  async enviarInvitaciones(slug: string, sessionToken: string) {
     return this.request<{ enviados: number }>(
-      `/api/intercambios/${intercambioId}/enviar-invitaciones?admin_token=${adminToken}`,
+      `/api/intercambios/${slug}/enviar-invitaciones?session_token=${sessionToken}`,
       {
         method: 'POST',
       }

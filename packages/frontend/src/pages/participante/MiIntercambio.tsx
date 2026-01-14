@@ -113,19 +113,27 @@ export function MiIntercambio() {
         animate={{ opacity: 1, y: 0 }}
         className="card text-center"
       >
-        <div
-          className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center text-4xl shadow-lg"
-          style={{ backgroundColor: participante.colorHex }}
-        >
-          {participante.colorEmoji}
-        </div>
+        {participante.colorHex ? (
+          <div
+            className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center text-4xl shadow-lg"
+            style={{ backgroundColor: participante.colorHex }}
+          >
+            {participante.colorEmoji}
+          </div>
+        ) : (
+          <div className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center text-4xl shadow-lg bg-gray-200 text-gray-500">
+            {participante.nombre.charAt(0).toUpperCase()}
+          </div>
+        )}
         <h1 className="text-2xl font-bold text-gray-900 mb-1">
           Hola, {participante.nombre}!
         </h1>
-        <p className="text-gray-600">
-          Tu color secreto es{' '}
-          <span className="font-medium">{participante.color}</span>
-        </p>
+        {participante.color && (
+          <p className="text-gray-600">
+            Tu color secreto es{' '}
+            <span className="font-medium">{participante.color}</span>
+          </p>
+        )}
       </motion.div>
 
       {/* Exchange info */}

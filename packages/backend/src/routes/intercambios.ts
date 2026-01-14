@@ -3,8 +3,8 @@ import { zValidator } from '@hono/zod-validator'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { db, intercambios, participantes, exclusiones } from '../db/index.js'
-import { requireAdmin } from '../middleware/auth.js'
-import { generateAdminToken, generateMagicToken, hashToken } from '../lib/tokens.js'
+import { requireSession } from '../middleware/auth.js'
+import { generateSessionToken, generateMagicToken, hashToken, generateSlug } from '../lib/tokens.js'
 import { NotFoundError, ValidationError, IntercambioYaSorteadoError } from '../lib/errors.js'
 import { realizarSorteo, validarExclusiones } from '../services/sorteo.js'
 import { enviarInvitacion } from '../services/email.js'
@@ -13,7 +13,7 @@ import {
   ActualizarIntercambioSchema,
   AgregarParticipanteSchema,
   AgregarExclusionSchema,
-  getColorInfo,
+  COLORES,
   calcularPrecio,
 } from 'shared'
 
@@ -25,16 +25,18 @@ app.post(
   zValidator('json', CrearIntercambioSchema),
   async (c) => {
     const data = c.req.valid('json')
-    const adminToken = generateAdminToken()
+    const sessionToken = generateSessionToken()
+    const slug = generateSlug(data.nombre)
 
     const [intercambio] = await db.insert(intercambios).values({
+      slug,
       nombre: data.nombre,
       fechaEvento: new Date(data.fechaEvento),
       tematica: data.tematica,
       precioBase: data.precioBase.toString(),
       reglaPrecio: data.reglaPrecio,
       factorPrecio: data.factorPrecio?.toString(),
-      adminToken: hashToken(adminToken),
+      sessionToken: hashToken(sessionToken),
     }).returning()
 
     const appUrl = process.env.APP_URL || 'http://localhost:5173'
@@ -42,16 +44,16 @@ app.post(
     return c.json({
       success: true,
       data: {
-        id: intercambio.id,
-        adminToken,
-        adminUrl: `${appUrl}/admin/${intercambio.id}?admin_token=${adminToken}`,
+        slug: intercambio.slug,
+        sessionToken,
+        url: `${appUrl}/intercambio/${intercambio.slug}?session_token=${sessionToken}`,
       },
     }, 201)
   }
 )
 
-// Obtener intercambio (admin)
-app.get('/:id', requireAdmin, async (c) => {
+// Obtener intercambio
+app.get('/:slug', requireSession, async (c) => {
   const intercambio = c.get('intercambio')
 
   const data = await db.query.intercambios.findFirst({
@@ -65,10 +67,10 @@ app.get('/:id', requireAdmin, async (c) => {
       exclusiones: {
         with: {
           participante: {
-            columns: { id: true, nombre: true, color: true },
+            columns: { id: true, nombre: true },
           },
           excluido: {
-            columns: { id: true, nombre: true, color: true },
+            columns: { id: true, nombre: true },
           },
         },
       },
@@ -96,8 +98,8 @@ app.get('/:id', requireAdmin, async (c) => {
 
 // Actualizar intercambio
 app.put(
-  '/:id',
-  requireAdmin,
+  '/:slug',
+  requireSession,
   zValidator('json', ActualizarIntercambioSchema),
   async (c) => {
     const intercambio = c.get('intercambio')
@@ -123,7 +125,7 @@ app.put(
 )
 
 // Eliminar intercambio
-app.delete('/:id', requireAdmin, async (c) => {
+app.delete('/:slug', requireSession, async (c) => {
   const intercambio = c.get('intercambio')
 
   await db.delete(intercambios).where(eq(intercambios.id, intercambio.id))
@@ -133,8 +135,8 @@ app.delete('/:id', requireAdmin, async (c) => {
 
 // Agregar participante
 app.post(
-  '/:id/participantes',
-  requireAdmin,
+  '/:slug/participantes',
+  requireSession,
   zValidator('json', AgregarParticipanteSchema),
   async (c) => {
     const intercambio = c.get('intercambio')
@@ -154,35 +156,30 @@ app.post(
       throw new ValidationError('Ya existe un participante con ese email en este intercambio')
     }
 
-    const colorInfo = getColorInfo(data.color)
     const magicToken = generateMagicToken()
 
     const [participante] = await db.insert(participantes).values({
       intercambioId: intercambio.id,
       nombre: data.nombre,
       email: data.email,
-      color: data.color,
-      colorHex: colorInfo.hex,
-      colorEmoji: colorInfo.emoji,
       magicToken: hashToken(magicToken),
     }).returning()
 
     return c.json({
       success: true,
       data: {
-        id: participante.id,
-        nombre: participante.nombre,
-        email: participante.email,
-        color: participante.color,
-        colorHex: participante.colorHex,
-        colorEmoji: participante.colorEmoji,
+        participante: {
+          id: participante.id,
+          nombre: participante.nombre,
+          email: participante.email,
+        },
       },
     }, 201)
   }
 )
 
 // Eliminar participante
-app.delete('/:id/participantes/:pid', requireAdmin, async (c) => {
+app.delete('/:slug/participantes/:pid', requireSession, async (c) => {
   const intercambio = c.get('intercambio')
   const participanteId = c.req.param('pid')
 
@@ -204,8 +201,8 @@ app.delete('/:id/participantes/:pid', requireAdmin, async (c) => {
 
 // Agregar exclusión
 app.post(
-  '/:id/exclusiones',
-  requireAdmin,
+  '/:slug/exclusiones',
+  requireSession,
   zValidator('json', AgregarExclusionSchema),
   async (c) => {
     const intercambio = c.get('intercambio')
@@ -231,7 +228,7 @@ app.post(
 )
 
 // Eliminar exclusión
-app.delete('/:id/exclusiones/:eid', requireAdmin, async (c) => {
+app.delete('/:slug/exclusiones/:eid', requireSession, async (c) => {
   const intercambio = c.get('intercambio')
   const exclusionId = c.req.param('eid')
 
@@ -252,7 +249,7 @@ app.delete('/:id/exclusiones/:eid', requireAdmin, async (c) => {
 })
 
 // Realizar sorteo
-app.post('/:id/sortear', requireAdmin, async (c) => {
+app.post('/:slug/sortear', requireSession, async (c) => {
   const intercambioData = c.get('intercambio')
 
   if (intercambioData.estado === 'SORTEADO' || intercambioData.estado === 'FINALIZADO') {
@@ -292,13 +289,31 @@ app.post('/:id/sortear', requireAdmin, async (c) => {
     throw new ValidationError(resultado.error)
   }
 
-  // Guardar asignaciones en transacción
+  // Asignar colores aleatorios a cada participante
+  const coloresDisponibles = [...COLORES].sort(() => Math.random() - 0.5)
+  const participantesIds = intercambio.participantes.map(p => p.id)
+
+  // Guardar asignaciones y colores en transacción
   await db.transaction(async (tx) => {
+    // Asignar a quién le regala cada participante
     for (const [deId, paraId] of resultado.asignaciones) {
       await tx
         .update(participantes)
         .set({ asignadoAId: paraId })
         .where(eq(participantes.id, deId))
+    }
+
+    // Asignar colores aleatorios (secretos) a cada participante
+    for (let i = 0; i < participantesIds.length; i++) {
+      const color = coloresDisponibles[i % coloresDisponibles.length]
+      await tx
+        .update(participantes)
+        .set({
+          color: color.nombre,
+          colorHex: color.hex,
+          colorEmoji: color.emoji,
+        })
+        .where(eq(participantes.id, participantesIds[i]))
     }
 
     await tx
@@ -314,7 +329,7 @@ app.post('/:id/sortear', requireAdmin, async (c) => {
 })
 
 // Enviar invitaciones
-app.post('/:id/enviar-invitaciones', requireAdmin, async (c) => {
+app.post('/:slug/enviar-invitaciones', requireSession, async (c) => {
   const intercambioData = c.get('intercambio')
 
   const intercambio = await db.query.intercambios.findFirst({
@@ -376,7 +391,7 @@ app.post('/:id/enviar-invitaciones', requireAdmin, async (c) => {
 })
 
 // Ver estado del intercambio
-app.get('/:id/estado', requireAdmin, async (c) => {
+app.get('/:slug/estado', requireSession, async (c) => {
   const intercambioData = c.get('intercambio')
 
   const intercambio = await db.query.intercambios.findFirst({

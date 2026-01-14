@@ -9,18 +9,16 @@ import {
   type Intercambio,
   type Participante,
   type Exclusion,
-  type ColorNombre,
 } from 'shared'
 import { api } from '../../lib/api'
 import { ParticipanteCard } from '../../components/ParticipanteCard'
-import { ColorPicker } from '../../components/ColorPicker'
 
 type Tab = 'participantes' | 'exclusiones' | 'config'
 
 export function Dashboard() {
-  const { id } = useParams<{ id: string }>()
+  const { slug } = useParams<{ slug: string }>()
   const [searchParams] = useSearchParams()
-  const adminToken = searchParams.get('admin_token') || ''
+  const sessionToken = searchParams.get('session_token') || ''
 
   const [intercambio, setIntercambio] = useState<Intercambio | null>(null)
   const [participantes, setParticipantes] = useState<Participante[]>([])
@@ -39,9 +37,9 @@ export function Dashboard() {
   const [isEnviando, setIsEnviando] = useState(false)
 
   const loadData = useCallback(async () => {
-    if (!id || !adminToken) return
+    if (!slug || !sessionToken) return
 
-    const result = await api.obtenerIntercambio(id, adminToken)
+    const result = await api.obtenerIntercambio(slug, sessionToken)
 
     if (result.success) {
       const { participantes: parts, exclusiones: excls, ...intercambioData } = result.data
@@ -53,7 +51,7 @@ export function Dashboard() {
     }
 
     setIsLoading(false)
-  }, [id, adminToken])
+  }, [slug, sessionToken])
 
   useEffect(() => {
     loadData()
@@ -64,20 +62,15 @@ export function Dashboard() {
     register,
     handleSubmit,
     reset,
-    setValue,
-    watch,
     formState: { errors, isSubmitting },
   } = useForm<AgregarParticipanteInput>({
     resolver: zodResolver(AgregarParticipanteSchema),
   })
 
-  const selectedColor = watch('color')
-  const usedColors = participantes.map((p) => p.color)
-
   const onAddParticipante = async (data: AgregarParticipanteInput) => {
-    if (!id) return
+    if (!slug) return
 
-    const result = await api.agregarParticipante(id, adminToken, data)
+    const result = await api.agregarParticipante(slug, sessionToken, data)
 
     if (result.success) {
       setParticipantes((prev) => [...prev, result.data.participante])
@@ -88,9 +81,9 @@ export function Dashboard() {
   }
 
   const onRemoveParticipante = async (participanteId: string) => {
-    if (!id || !confirm('Estas seguro de eliminar a este participante?')) return
+    if (!slug || !confirm('Estas seguro de eliminar a este participante?')) return
 
-    const result = await api.eliminarParticipante(id, adminToken, participanteId)
+    const result = await api.eliminarParticipante(slug, sessionToken, participanteId)
 
     if (result.success) {
       setParticipantes((prev) => prev.filter((p) => p.id !== participanteId))
@@ -107,9 +100,9 @@ export function Dashboard() {
   }
 
   const onAddExclusion = async () => {
-    if (!id || !exclusionFrom || !exclusionTo) return
+    if (!slug || !exclusionFrom || !exclusionTo) return
 
-    const result = await api.agregarExclusion(id, adminToken, {
+    const result = await api.agregarExclusion(slug, sessionToken, {
       participanteId: exclusionFrom,
       excluidoId: exclusionTo,
     })
@@ -125,9 +118,9 @@ export function Dashboard() {
   }
 
   const onRemoveExclusion = async (exclusionId: string) => {
-    if (!id) return
+    if (!slug) return
 
-    const result = await api.eliminarExclusion(id, adminToken, exclusionId)
+    const result = await api.eliminarExclusion(slug, sessionToken, exclusionId)
 
     if (result.success) {
       setExclusiones((prev) => prev.filter((e) => e.id !== exclusionId))
@@ -137,10 +130,10 @@ export function Dashboard() {
   }
 
   const onSortear = async () => {
-    if (!id || !confirm('Una vez realizado el sorteo, no se puede deshacer. Continuar?')) return
+    if (!slug || !confirm('Una vez realizado el sorteo, no se puede deshacer. Continuar?')) return
 
     setIsSorteando(true)
-    const result = await api.sortear(id, adminToken)
+    const result = await api.sortear(slug, sessionToken)
     setIsSorteando(false)
 
     if (result.success) {
@@ -151,10 +144,10 @@ export function Dashboard() {
   }
 
   const onEnviarInvitaciones = async () => {
-    if (!id) return
+    if (!slug) return
 
     setIsEnviando(true)
-    const result = await api.enviarInvitaciones(id, adminToken)
+    const result = await api.enviarInvitaciones(slug, sessionToken)
     setIsEnviando(false)
 
     if (result.success) {
@@ -164,8 +157,8 @@ export function Dashboard() {
     }
   }
 
-  const copyAdminLink = () => {
-    const url = `${window.location.origin}/admin/${id}?admin_token=${adminToken}`
+  const copyLink = () => {
+    const url = `${window.location.origin}/intercambio/${slug}?session_token=${sessionToken}`
     navigator.clipboard.writeText(url)
     alert('Enlace copiado al portapapeles')
   }
@@ -235,8 +228,8 @@ export function Dashboard() {
 
         {/* Actions */}
         <div className="mt-4 pt-4 border-t border-gray-100 flex flex-wrap gap-2">
-          <button onClick={copyAdminLink} className="btn-secondary text-sm">
-            Copiar enlace admin
+          <button onClick={copyLink} className="btn-secondary text-sm">
+            Copiar enlace
           </button>
 
           {!isSorteado && participantes.length >= 3 && (
@@ -354,13 +347,6 @@ export function Dashboard() {
                     </div>
                   </div>
 
-                  <ColorPicker
-                    value={selectedColor}
-                    onChange={(color) => setValue('color', color)}
-                    usedColors={usedColors as ColorNombre[]}
-                    error={errors.color?.message}
-                  />
-
                   <button
                     type="submit"
                     disabled={isSubmitting}
@@ -435,23 +421,11 @@ export function Dashboard() {
                     key={e.id}
                     className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                   >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-sm"
-                        style={{ backgroundColor: e.participante.colorHex }}
-                      >
-                        {e.participante.colorEmoji}
-                      </div>
+                    <div className="flex items-center gap-2">
                       <span className="font-medium">
                         {e.participante.nombre}
                       </span>
                       <span className="text-gray-400">no puede regalar a</span>
-                      <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-sm"
-                        style={{ backgroundColor: e.excluido.colorHex }}
-                      >
-                        {e.excluido.colorEmoji}
-                      </div>
                       <span className="font-medium">{e.excluido.nombre}</span>
                     </div>
                     {!isSorteado && (

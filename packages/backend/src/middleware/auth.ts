@@ -18,18 +18,18 @@ type ParticipanteContext = {
   participante: typeof participantes.$inferSelect & { intercambio: typeof intercambios.$inferSelect }
 }
 
-// Middleware para verificar admin_token (query param)
-export const requireAdmin = createMiddleware<{ Variables: AdminContext }>(async (c, next) => {
-  const adminToken = c.req.query('admin_token')
+// Middleware para verificar session_token (query param)
+export const requireSession = createMiddleware<{ Variables: AdminContext }>(async (c, next) => {
+  const sessionToken = c.req.query('session_token')
 
-  if (!adminToken) {
-    throw new UnauthorizedError('Se requiere admin_token')
+  if (!sessionToken) {
+    throw new UnauthorizedError('Se requiere session_token')
   }
 
-  const hashedToken = hashToken(adminToken)
+  const hashedToken = hashToken(sessionToken)
 
   const intercambio = await db.query.intercambios.findFirst({
-    where: eq(intercambios.adminToken, hashedToken),
+    where: eq(intercambios.sessionToken, hashedToken),
   })
 
   if (!intercambio) {
@@ -39,6 +39,9 @@ export const requireAdmin = createMiddleware<{ Variables: AdminContext }>(async 
   c.set('intercambio', intercambio)
   await next()
 })
+
+// Alias for backwards compatibility
+export const requireAdmin = requireSession
 
 // Middleware para verificar JWT de participante
 export const requireParticipante = createMiddleware<{ Variables: ParticipanteContext }>(async (c, next) => {

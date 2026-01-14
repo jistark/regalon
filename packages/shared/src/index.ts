@@ -57,7 +57,6 @@ export type ActualizarIntercambioInput = z.infer<typeof ActualizarIntercambioSch
 export const AgregarParticipanteSchema = z.object({
   nombre: z.string().min(1, 'El nombre es requerido').max(100),
   email: z.string().email('Email inválido'),
-  color: ColorNombre,
 })
 export type AgregarParticipanteInput = z.infer<typeof AgregarParticipanteSchema>
 
@@ -94,9 +93,9 @@ export const ParticipanteSchema = z.object({
   id: z.string().uuid(),
   nombre: z.string(),
   email: z.string().email(),
-  color: ColorNombre,
-  colorHex: z.string(),
-  colorEmoji: z.string(),
+  color: ColorNombre.nullable(),
+  colorHex: z.string().nullable(),
+  colorEmoji: z.string().nullable(),
   haVistoResultado: z.boolean(),
 })
 export type Participante = z.infer<typeof ParticipanteSchema>

@@ -38,8 +38,8 @@ export function CrearIntercambio() {
     setIsLoading(false)
 
     if (result.success) {
-      // Navigate to admin dashboard with admin token
-      navigate(`/admin/${result.data.id}?admin_token=${result.data.adminToken}`)
+      // Navigate to dashboard with session token
+      navigate(`/intercambio/${result.data.slug}?session_token=${result.data.sessionToken}`)
     } else {
       setError(result.error)
     }
