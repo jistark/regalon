@@ -1,4 +1,14 @@
 import 'dotenv/config'
+
+// Catch unhandled errors to prevent crashes
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err)
+})
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason)
+})
+
 import { Hono } from 'hono'
 import { logger } from 'hono/logger'
 import { createCorsMiddleware } from './middleware/cors.js'
