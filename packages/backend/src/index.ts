@@ -11,12 +11,15 @@ process.on('unhandledRejection', (reason, promise) => {
 
 import { Hono } from 'hono'
 import { logger } from 'hono/logger'
+import { serveStatic } from 'hono/bun'
 import { createCorsMiddleware } from './middleware/cors.js'
 import { AppError } from './lib/errors.js'
 import intercambiosRoutes from './routes/intercambios.js'
 import participantesRoutes from './routes/participantes.js'
 import authRoutes from './routes/auth.js'
 import sugerenciasRoutes from './routes/sugerencias.js'
+
+const STATIC_DIR = process.env.STATIC_DIR || '../frontend/dist'
 
 const app = new Hono()
 
@@ -52,8 +55,29 @@ app.onError((err, c) => {
   )
 })
 
-// 404
-app.notFound((c) => {
+// Servir archivos estáticos del frontend
+app.use('*', serveStatic({ root: STATIC_DIR }))
+
+// SPA fallback - servir index.html para rutas no-API
+app.notFound(async (c) => {
+  const path = c.req.path
+
+  // Si es una ruta de API, devolver 404 JSON
+  if (path.startsWith('/api')) {
+    return c.json({ success: false, error: 'Ruta no encontrada' }, 404)
+  }
+
+  // Para otras rutas, servir index.html (SPA routing)
+  try {
+    const indexPath = `${STATIC_DIR}/index.html`
+    const file = Bun.file(indexPath)
+    if (await file.exists()) {
+      return c.html(await file.text())
+    }
+  } catch (e) {
+    console.error('Error serving index.html:', e)
+  }
+
   return c.json({ success: false, error: 'Ruta no encontrada' }, 404)
 })
 

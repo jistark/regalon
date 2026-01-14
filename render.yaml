@@ -1,0 +1,33 @@
+databases:
+  - name: intercambio-db
+    plan: free
+    databaseName: intercambio
+    user: intercambio
+
+services:
+  - type: web
+    name: intercambio-secreto
+    runtime: node
+    plan: free
+    buildCommand: |
+      curl -fsSL https://bun.sh/install | bash
+      export PATH="$HOME/.bun/bin:$PATH"
+      bun install
+      bun run build
+    startCommand: |
+      export PATH="$HOME/.bun/bin:$PATH"
+      STATIC_DIR=packages/frontend/dist bun packages/backend/src/index.ts
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: intercambio-db
+          property: connectionString
+      - key: APP_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: RESEND_API_KEY
+        sync: false
+    healthCheckPath: /api/health
