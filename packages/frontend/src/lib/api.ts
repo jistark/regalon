@@ -86,11 +86,7 @@ class ApiClient {
   }
 
   async obtenerIntercambio(id: string, adminToken: string) {
-    return this.request<{
-      intercambio: any
-      participantes: any[]
-      exclusiones: any[]
-    }>(`/api/intercambios/${id}?admin_token=${adminToken}`)
+    return this.request<any>(`/api/intercambios/${id}?admin_token=${adminToken}`)
   }
 
   async agregarParticipante(

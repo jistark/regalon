@@ -44,9 +44,10 @@ export function Dashboard() {
     const result = await api.obtenerIntercambio(id, adminToken)
 
     if (result.success) {
-      setIntercambio(result.data.intercambio)
-      setParticipantes(result.data.participantes)
-      setExclusiones(result.data.exclusiones)
+      const { participantes: parts, exclusiones: excls, ...intercambioData } = result.data
+      setIntercambio(intercambioData as Intercambio)
+      setParticipantes(parts || [])
+      setExclusiones(excls || [])
     } else {
       setError(result.error)
     }
